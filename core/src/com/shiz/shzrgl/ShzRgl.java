@@ -42,13 +42,21 @@ public class ShzRgl extends ApplicationAdapter {
     private DungeonGenerator dungeonGen;
     private char[][] decoDungeon, bareDungeon, lineDungeon;
     private int[][] colorIndices, bgColorIndices;
-    /** In number of cells */
+    /**
+     * In number of cells
+     */
     private int gridWidth;
-    /** In number of cells */
+    /**
+     * In number of cells
+     */
     private int gridHeight;
-    /** The pixel width of a cell */
+    /**
+     * The pixel width of a cell
+     */
     private int cellWidth;
-    /** The pixel height of a cell */
+    /**
+     * The pixel height of a cell
+     */
     private int cellHeight;
     private SquidInput input;
     private Color bgColor;
@@ -62,7 +70,7 @@ public class ShzRgl extends ApplicationAdapter {
     private int langIndex = 0;
 
     @Override
-    public void create () {
+    public void create() {
         //These variables, corresponding to the screen's width and height in cells and a cell's width and height in
         //pixels, must match the size you specified in the launcher for input to behave.
         //This is one of the more common places a mistake can happen.
@@ -177,54 +185,7 @@ public class ShzRgl extends ApplicationAdapter {
         return new SquidInput(new SquidInput.KeyHandler() {
             @Override
             public void handle(char key, boolean alt, boolean ctrl, boolean shift) {
-                switch (key)
-                {
-                    case SquidInput.UP_ARROW:
-                    case 'k':
-                    case 'w':
-                    case 'K':
-                    case 'W':
-                    {
-                        //-1 is up on the screen
-                        move(0, -1);
-                        break;
-                    }
-                    case SquidInput.DOWN_ARROW:
-                    case 'j':
-                    case 's':
-                    case 'J':
-                    case 'S':
-                    {
-                        //+1 is down on the screen
-                        move(0, 1);
-                        break;
-                    }
-                    case SquidInput.LEFT_ARROW:
-                    case 'h':
-                    case 'a':
-                    case 'H':
-                    case 'A':
-                    {
-                        move(-1, 0);
-                        break;
-                    }
-                    case SquidInput.RIGHT_ARROW:
-                    case 'l':
-                    case 'd':
-                    case 'L':
-                    case 'D':
-                    {
-                        move(1, 0);
-                        break;
-                    }
-                    case 'Q':
-                    case 'q':
-                    case SquidInput.ESCAPE:
-                    {
-                        Gdx.app.exit();
-                        break;
-                    }
-                }
+
             }
         },
                 //The second parameter passed to a SquidInput can be a SquidMouse, which takes mouse or touchscreen
@@ -233,55 +194,54 @@ public class ShzRgl extends ApplicationAdapter {
                 // and screenY as 2 (since 51 divided by 24 rounded down is 2)).
                 new SquidMouse(cellWidth, cellHeight, gridWidth, gridHeight, 0, 0, new InputAdapter() {
 
-            // if the user clicks and there are no awaitedMoves queued up, generate toCursor if it
-            // hasn't been generated already by mouseMoved, then copy it over to awaitedMoves.
-            @Override
-            public boolean touchUp(int screenX, int screenY, int pointer, int button) {
-                if(awaitedMoves.isEmpty()) {
-                    if (toCursor.isEmpty()) {
-                        cursor = Coord.get(screenX, screenY);
-                        //This uses DijkstraMap.findPath to get a possibly long path from the current player position
-                        //to the position the user clicked on.
-                        toCursor = playerToCursor.findPath(100, null, null, player, cursor);
+                    // if the user clicks and there are no awaitedMoves queued up, generate toCursor if it
+                    // hasn't been generated already by mouseMoved, then copy it over to awaitedMoves.
+                    @Override
+                    public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+                        if (awaitedMoves.isEmpty()) {
+                            if (toCursor.isEmpty()) {
+                                cursor = Coord.get(screenX, screenY);
+                                //This uses DijkstraMap.findPath to get a possibly long path from the current player position
+                                //to the position the user clicked on.
+                                toCursor = playerToCursor.findPath(100, null, null, player, cursor);
+                            }
+                            awaitedMoves = new ArrayList<>(toCursor);
+                        }
+                        return false;
                     }
-                    awaitedMoves = new ArrayList<>(toCursor);
-                }
-                return false;
-            }
 
-            @Override
-            public boolean touchDragged(int screenX, int screenY, int pointer) {
-                return mouseMoved(screenX, screenY);
-            }
+                    @Override
+                    public boolean touchDragged(int screenX, int screenY, int pointer) {
+                        return mouseMoved(screenX, screenY);
+                    }
 
-            // causes the path to the mouse position to become highlighted (toCursor contains a list of points that
-            // receive highlighting). Uses DijkstraMap.findPath() to find the path, which is surprisingly fast.
-            @Override
-            public boolean mouseMoved(int screenX, int screenY) {
-                if(!awaitedMoves.isEmpty())
-                    return false;
-                if(cursor.x == screenX && cursor.y == screenY)
-                {
-                    return false;
-                }
-                cursor = Coord.get(screenX, screenY);
-                toCursor = playerToCursor.findPath(100, null, null, player, cursor);
-                return false;
-            }
-        }));
+                    // causes the path to the mouse position to become highlighted (toCursor contains a list of points that
+                    // receive highlighting). Uses DijkstraMap.findPath() to find the path, which is surprisingly fast.
+                    @Override
+                    public boolean mouseMoved(int screenX, int screenY) {
+                        if (!awaitedMoves.isEmpty())
+                            return false;
+                        if (cursor.x == screenX && cursor.y == screenY) {
+                            return false;
+                        }
+                        cursor = Coord.get(screenX, screenY);
+                        toCursor = playerToCursor.findPath(100, null, null, player, cursor);
+                        return false;
+                    }
+                }));
     }
 
     /**
      * Move the player if he isn't bumping into a wall or trying to go off the map somehow.
      * In a fully-fledged game, this would not be organized like this, but this is a one-file demo.
+     *
      * @param xmod x
      * @param ymod y
      */
     private void move(int xmod, int ymod) {
         int newX = player.x + xmod, newY = player.y + ymod;
         if (newX >= 0 && newY >= 0 && newX < gridWidth && newY < gridHeight
-                && bareDungeon[newX][newY] != '#')
-        {
+                && bareDungeon[newX][newY] != '#') {
             player = player.translate(xmod, ymod);
         }
         // loops through the text snippets displayed whenever the player moves
@@ -291,15 +251,13 @@ public class ShzRgl extends ApplicationAdapter {
     /**
      * Draws the map, applies any highlighting for the path to the cursor, and then draws the player.
      */
-    public void putMap()
-    {
+    public void putMap() {
         for (int i = 0; i < gridWidth; i++) {
             for (int j = 0; j < gridHeight; j++) {
                 display.put(i, j, lineDungeon[i][j], colorIndices[i][j], bgColorIndices[i][j], 40);
             }
         }
-        for (Coord pt : toCursor)
-        {
+        for (Coord pt : toCursor) {
             // use a brighter light to trace the path to the cursor, from 170 max lightness to 0 min.
             display.highlight(pt.x, pt.y, 100);
         }
@@ -315,8 +273,9 @@ public class ShzRgl extends ApplicationAdapter {
             display.putString(2, gridHeight + i + 1, lang[(langIndex + i) % 12], 0, 1);
         }
     }
+
     @Override
-    public void render () {
+    public void render() {
         // standard clear the background routine for libGDX
         Gdx.gl.glClearColor(bgColor.r / 255.0f, bgColor.g / 255.0f, bgColor.b / 255.0f, 1.0f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -324,8 +283,7 @@ public class ShzRgl extends ApplicationAdapter {
         // need to display the map every frame, since we clear the screen to avoid artifacts.
         putMap();
         // if the user clicked, we have a list of moves to perform.
-        if(!awaitedMoves.isEmpty())
-        {
+        if (!awaitedMoves.isEmpty()) {
             // this doesn't check for input, but instead processes and removes Points from awaitedMoves.
             secondsWithoutMoves += Gdx.graphics.getDeltaTime();
             if (secondsWithoutMoves >= 0.1) {
@@ -336,7 +294,7 @@ public class ShzRgl extends ApplicationAdapter {
             }
         }
         // if we are waiting for the player's input and get input, process it.
-        else if(input.hasNext()) {
+        else if (input.hasNext()) {
             input.next();
         }
 
@@ -345,9 +303,9 @@ public class ShzRgl extends ApplicationAdapter {
     }
 
     @Override
-	public void resize(int width, int height) {
-		super.resize(width, height);
+    public void resize(int width, int height) {
+        super.resize(width, height);
         //very important to have the mouse behave correctly if the user fullscreens or resizes the game!
-		input.getMouse().reinitialize((float) width / this.gridWidth, (float)height / (this.gridHeight + 8), this.gridWidth, this.gridHeight, 0, 0);
-	}
+        input.getMouse().reinitialize((float) width / this.gridWidth, (float) height / (this.gridHeight + 8), this.gridWidth, this.gridHeight, 0, 0);
+    }
 }
